@@ -1,0 +1,36 @@
+package com.as.authservice.controllers;
+
+import com.as.authservice.dtos.DriverSignupRequest;
+import com.as.authservice.dtos.DriverSignupResponse;
+import com.as.authservice.dtos.RiderSignupRequest;
+import com.as.authservice.dtos.RiderSignupResponse;
+import com.as.authservice.services.AuthService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
+public class AuthController {
+
+    private final AuthService authService;
+
+    @PostMapping("/signup/rider")
+    public ResponseEntity<RiderSignupResponse> signupRider(@RequestBody RiderSignupRequest signupRequest) {
+
+        RiderSignupResponse riderSignupResponse = authService.signupRider(signupRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(riderSignupResponse);
+    }
+
+    @PostMapping("/signup/driver")
+    public ResponseEntity<DriverSignupResponse> signupDriver(@RequestBody DriverSignupRequest signupRequest) {
+
+        DriverSignupResponse driverSignupResponse = authService.signupDriver(signupRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(driverSignupResponse);
+    }
+}
