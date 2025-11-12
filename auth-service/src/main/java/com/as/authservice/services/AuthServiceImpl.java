@@ -1,9 +1,12 @@
 package com.as.authservice.services;
 
 import com.as.authservice.dtos.*;
+import com.as.authservice.events.DriverRegisteredEvent;
+import com.as.authservice.events.RiderRegisteredEvent;
 import com.as.authservice.exceptions.DriverNotFoundException;
 import com.as.authservice.exceptions.InvalidCredentialsException;
 import com.as.authservice.exceptions.RiderNotFoundException;
+import com.as.authservice.kafka.AuthKafkaProducer;
 import com.as.authservice.util.JWTUtils;
 import com.as.authservice.mappers.EntityDtoMapper;
 import com.as.authservice.models.Driver;
@@ -22,6 +25,7 @@ public class AuthServiceImpl implements AuthService {
     private final DriverRepository driverRepository;
     private final PasswordEncoder passwordEncoder;
     private final JWTUtils jwtUtils;
+    private final AuthKafkaProducer kafkaProducer;
 
     @Override
     public RiderSignupResponse signupRider(RiderSignupRequest signupRequest) {
@@ -32,6 +36,14 @@ public class AuthServiceImpl implements AuthService {
                 .phoneNumber(signupRequest.getPhoneNumber())
                 .build();
         Rider savedRider = riderRepository.save(rider);
+
+        RiderRegisteredEvent event = RiderRegisteredEvent.builder()
+                .riderId(savedRider.getRiderId())
+                .name(savedRider.getName())
+                .phoneNumber(savedRider.getPhoneNumber())
+                .email(savedRider.getEmail())
+                .build();
+        kafkaProducer.sendRiderRegisteredEvent(event);
         return EntityDtoMapper.toRiderSignupResponse(savedRider);
     }
 
@@ -46,7 +58,17 @@ public class AuthServiceImpl implements AuthService {
                 .vehicleNumber(signupRequest.getVehicleNumber())
                 .active(true)
                 .build();
-        return EntityDtoMapper.toDriverSignupResponse(driverRepository.save(driver));
+
+        Driver savedDriver = driverRepository.save(driver);
+
+        DriverRegisteredEvent event = DriverRegisteredEvent.builder()
+                .driverId(savedDriver.getDriverId())
+                .name(savedDriver.getName())
+                .phoneNumber(savedDriver.getPhoneNumber())
+                .email(savedDriver.getEmail())
+                .build();
+        kafkaProducer.sendDriverRegisteredEvent(event);
+        return EntityDtoMapper.toDriverSignupResponse(savedDriver);
     }
 
     @Override
