@@ -10,5 +10,7 @@ public interface AuthService {
 
     String signin(LoginRequest request);
 
+    JwtValidationResponse validateToken(String token);
+
 
 }

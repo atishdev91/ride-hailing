@@ -72,4 +72,22 @@ public class AuthServiceImpl implements AuthService {
         }
         throw new InvalidCredentialsException("Invalid Credentials");
     }
+
+    @Override
+    public JwtValidationResponse validateToken(String token) {
+        if(jwtUtils.validateToken(token)) {
+            String email = jwtUtils.extractEmail(token);
+            String role = jwtUtils.extractRole(token);
+            return JwtValidationResponse.builder()
+                    .valid(true)
+                    .email(email)
+                    .role(role)
+                    .build();
+        }
+        return JwtValidationResponse.builder()
+                .valid(false)
+                .email(null)
+                .role(null)
+                .build();
+    }
 }

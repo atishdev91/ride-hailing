@@ -2,7 +2,10 @@ package com.as.authservice.controllers;
 
 import com.as.authservice.dtos.*;
 import com.as.authservice.services.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +38,20 @@ public class AuthController {
     public ResponseEntity<?> signin(@RequestBody LoginRequest request) {
 
         return new ResponseEntity<>(authService.signin(request), HttpStatus.OK);
+    }
+
+    @PostMapping("/validate")
+    public ResponseEntity<JwtValidationResponse> validateToken(HttpServletRequest request) {
+
+        String authHeader = request.getHeader("Authorization");
+
+        if(authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new JwtValidationResponse(false, null, null));
+        }
+
+        String token = authHeader.substring(7);
+        JwtValidationResponse response = authService.validateToken(token);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
 }

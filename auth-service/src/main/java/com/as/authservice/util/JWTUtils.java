@@ -38,18 +38,21 @@ public class JWTUtils {
                 .compact();
     }
 
-    public boolean validateToken(String token, String email) {
+    public boolean validateToken(String token) {
         try {
-            Claims claims = extractAllClaims(token);
+            Claims claims = Jwts.parser()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
 
-            String tokenUsername = claims.getSubject();
             Date expiration = claims.getExpiration();
-
-            return (email.equals(tokenUsername) && expiration.after(new Date()));
+            return expiration.after(new Date());
         } catch (Exception e) {
             return false;
         }
     }
+
 
     public Claims extractAllClaims(String token) {
         return Jwts

@@ -51,7 +51,7 @@ public class JWTRequestFilter extends OncePerRequestFilter {
         String email = jwtUtils.extractEmail(token);
 
         // Validate token
-        if(!jwtUtils.validateToken(token, email)) {
+        if(!jwtUtils.validateToken(token)) {
             // Token is valid -> continue chain
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 //            filterChain.doFilter(request, response);
