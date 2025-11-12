@@ -1,0 +1,4 @@
+package com.as.authservice.exceptions;
+
+public class RiderNotFoundException {
+}

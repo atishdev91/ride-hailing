@@ -1,9 +1,6 @@
 package com.as.authservice.services;
 
-import com.as.authservice.dtos.DriverSignupRequest;
-import com.as.authservice.dtos.DriverSignupResponse;
-import com.as.authservice.dtos.RiderSignupRequest;
-import com.as.authservice.dtos.RiderSignupResponse;
+import com.as.authservice.dtos.*;
 
 public interface AuthService {
 
@@ -11,6 +8,7 @@ public interface AuthService {
 
     DriverSignupResponse signupDriver(DriverSignupRequest signupRequest);
 
+    String signin(LoginRequest request);
 
 
 }

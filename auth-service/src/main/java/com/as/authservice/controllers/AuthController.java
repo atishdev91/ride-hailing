@@ -1,9 +1,6 @@
 package com.as.authservice.controllers;
 
-import com.as.authservice.dtos.DriverSignupRequest;
-import com.as.authservice.dtos.DriverSignupResponse;
-import com.as.authservice.dtos.RiderSignupRequest;
-import com.as.authservice.dtos.RiderSignupResponse;
+import com.as.authservice.dtos.*;
 import com.as.authservice.services.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,4 +30,11 @@ public class AuthController {
         DriverSignupResponse driverSignupResponse = authService.signupDriver(signupRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(driverSignupResponse);
     }
+
+    @PostMapping("/signin")
+    public ResponseEntity<?> signin(@RequestBody LoginRequest request) {
+
+        return new ResponseEntity<>(authService.signin(request), HttpStatus.OK);
+    }
+
 }
