@@ -2,6 +2,7 @@ package com.as.locationservice.kafka;
 
 import com.as.locationservice.dtos.DriverLocationDto;
 import com.as.locationservice.events.DriverRegisteredEvent;
+import com.as.locationservice.events.RiderRegisteredEvent;
 import com.as.locationservice.services.LocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,4 +28,17 @@ public class LocationKafkaListener {
                 .build());
         log.info("Driver {} initialized in Redis", event.getDriverId());
     }
+//
+//    @KafkaListener(topics = "rider-registered", groupId = "location-service-group")
+//    public void handleRiderRegisteredEvent(RiderRegisteredEvent event) {
+//        log.info("Received RiderRegisteredEvent: {}", event);
+//
+//        // Initialize the driver in Redis with a default location (0,0)
+//        locationService.addDriverLocation(DriverLocationDto.builder()
+//                .driverId(event.getDriverId())
+//                .latitude(0.0)
+//                .longitude(0.0)
+//                .build());
+//        log.info("Driver {} initialized in Redis", event.getDriverId());
+//    }
 }

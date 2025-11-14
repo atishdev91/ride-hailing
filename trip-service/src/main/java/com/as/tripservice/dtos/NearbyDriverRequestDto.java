@@ -1,4 +1,4 @@
-package com.as.locationservice.dtos;
+package com.as.tripservice.dtos;
 
 import lombok.*;
 
@@ -7,10 +7,9 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
-public class DriverLocationDto {
+public class NearbyDriverRequestDto {
 
-    private Long driverId;
     private double latitude;
     private double longitude;
+    private int kilometers;
 }
