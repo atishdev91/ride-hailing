@@ -6,4 +6,6 @@ import com.as.tripservice.dtos.TripResponse;
 public interface TripService {
 
     TripResponse createTrip(TripRequest tripRequest);
+
+    TripResponse acceptTrip(Long tripId, Long driverId);
 }

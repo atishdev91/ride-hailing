@@ -29,4 +29,11 @@ public class Trip extends BaseModel{
     private Double endLatitude;
 
     private Double endLongitude;
+
+    // @Version is essential: the first successful update will
+    // increment it,
+    // concurrent attempts will throw
+    // OptimisticLockingFailureException.
+    @Version
+    private Integer version;
 }

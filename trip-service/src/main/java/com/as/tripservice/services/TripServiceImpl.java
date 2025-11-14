@@ -5,8 +5,10 @@ import com.as.tripservice.dtos.DriverLocationDto;
 import com.as.tripservice.dtos.NearbyDriverRequestDto;
 import com.as.tripservice.dtos.TripRequest;
 import com.as.tripservice.dtos.TripResponse;
+import com.as.tripservice.events.DriverAcceptedEvent;
 import com.as.tripservice.events.DriverAssignedEvent;
 import com.as.tripservice.events.TripRequestedEvent;
+import com.as.tripservice.exceptions.TripNotFoundException;
 import com.as.tripservice.kafka.TripKafkaProducer;
 import com.as.tripservice.mapper.EntityDtoMapper;
 import com.as.tripservice.models.Trip;
@@ -15,8 +17,10 @@ import com.as.tripservice.repositories.TripRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -46,14 +50,13 @@ public class TripServiceImpl implements TripService {
         // saving the initial trip generates the id
         // publish the trip requested event (asyn)
         kafkaProducer.sendTripRequestedEvent(TripRequestedEvent.builder()
-                        .tripId(initTrip.getTripId())
-                        .riderId(initTrip.getRiderId())
-                        .startLatitude(tripRequest.getStartLatitude())
-                        .startLongitude(tripRequest.getStartLongitude())
-                        .endLatitude(tripRequest.getEndLatitude())
-                        .endLongitude(tripRequest.getEndLongitude())
-                        .build());
-
+                .tripId(initTrip.getTripId())
+                .riderId(initTrip.getRiderId())
+                .startLatitude(tripRequest.getStartLatitude())
+                .startLongitude(tripRequest.getStartLongitude())
+                .endLatitude(tripRequest.getEndLatitude())
+                .endLongitude(tripRequest.getEndLongitude())
+                .build());
 
 
         NearbyDriverRequestDto requestDto = NearbyDriverRequestDto.builder()
@@ -73,9 +76,9 @@ public class TripServiceImpl implements TripService {
 
         // pubish the driver assigned event (asyn)
         kafkaProducer.sendDriverAssignedEvent(DriverAssignedEvent.builder()
-                        .tripId(initTrip.getTripId())
-                        .driverId(selectedDriver.getDriverId())
-                        .riderId(tripRequest.getRiderId())
+                .tripId(initTrip.getTripId())
+                .driverId(selectedDriver.getDriverId())
+                .riderId(tripRequest.getRiderId())
                 .build());
 
         log.info("Nearby drivers received: {}", nearbyDrivers);
@@ -88,4 +91,65 @@ public class TripServiceImpl implements TripService {
 
         return EntityDtoMapper.map(savedTrip);
     }
+
+    /**
+     * Accept trip called by driver via REST endpoint.
+     * - Transactional to ensure DB atomicity.
+     * - Idempotent: same driver asking twice returns OK.
+     * - Optimistic locking prevents race conditions (two drivers).
+     */
+    @Override
+    @Transactional
+    public TripResponse acceptTrip(Long tripId, Long driverId) {
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new TripNotFoundException(tripId));
+
+        // Idempotency: if already accepted by same driver, return current state
+        if (trip.getTripStatus() == TripStatus.ACCEPTED && driverId.equals(trip.getDriverId())) {
+            log.info("Trip {} already accepted by driver {}", tripId, driverId);
+            return EntityDtoMapper.map(trip);
+        }
+
+        if (trip.getTripStatus() == TripStatus.ACCEPTED && !driverId.equals(trip.getDriverId())) {
+            throw new IllegalStateException("Trip already accepted by another driver");
+        }
+
+        // Ensure trip is in a state that can be accepted
+        if (trip.getTripStatus() != TripStatus.ASSIGNED) {
+            throw new IllegalStateException("Trip cannot be accepted in status: " + trip.getTripStatus());
+        }
+
+        // Validate driver was actually assigned/in candidate list as per your model
+        // If you store candidates in the trip (e.g., matchedCandidatesJson), check here.
+        // For simplicity, we assume selected driver is allowed to accept.
+
+        trip.setDriverId(driverId);
+        trip.setTripStatus(TripStatus.ACCEPTED);
+
+        try {
+            // will increment @Version
+            // Save will check @Version and throw OptimisticLockingFailureException if concurrent change occurred
+            Trip saved = tripRepository.save(trip);
+
+            // publish DriverAcceptedEvent asynchronously
+            DriverAcceptedEvent evt = DriverAcceptedEvent.builder()
+                    .tripId(saved.getTripId())
+                    .riderId(saved.getRiderId())
+                    .driverId(saved.getDriverId())
+                    .acceptedAt(Instant.now())
+                    .build();
+
+            kafkaProducer.sendDriverAcceptedEvent(evt);
+
+            log.info("Trip {} accepted by driver {}", tripId, driverId);
+            TripResponse response = EntityDtoMapper.map(saved);
+            return response;
+        } catch (ObjectOptimisticLockingFailureException ex) {
+            // Concurrent update (another driver accepted). Surface a conflict to caller.
+            log.warn("Optimistic locking failure while accepting trip {} by driver {}: {}", tripId, driverId, ex.getMessage());
+            throw ex; // Controller should map to HTTP 409
+        }
+    }
 }
+
