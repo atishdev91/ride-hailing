@@ -43,4 +43,10 @@ public class TripController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
         }
     }
+
+    @PostMapping("/{tripId}/arrived")
+    public ResponseEntity<?> driverArrived(@PathVariable Long tripId) {
+        tripService.markDriverArrived(tripId);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -1,6 +1,7 @@
 package com.as.tripservice.kafka;
 
 import com.as.tripservice.events.DriverAcceptedEvent;
+import com.as.tripservice.events.DriverArrivedEvent;
 import com.as.tripservice.events.DriverAssignedEvent;
 import com.as.tripservice.events.TripRequestedEvent;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class TripKafkaProducer {
     private static final String TRIP_REQUESTED_TOPIC = "trip-requested";
     private static final String DRIVER_ASSIGNED_TOPIC = "driver-assigned";
     private static final String DRIVER_ACCEPTED_TOPIC = "driver-accepted";
+    private static final String DRIVER_ARRIVED_TOPIC = "driver-arrived";
 
     public void sendTripRequestedEvent(TripRequestedEvent event) {
         log.info("Publishing TripRequestedEvent {}", event);
@@ -32,6 +34,11 @@ public class TripKafkaProducer {
     public void sendDriverAcceptedEvent(DriverAcceptedEvent event) {
         log.info("Publishing DriverAcceptedEvent {}", event);
         kafkaTemplate.send(DRIVER_ACCEPTED_TOPIC, event.getTripId().toString(), event);
+    }
+
+    public void sendDriverArrivedEvent(DriverArrivedEvent event) {
+        log.info("Publishing DriverArrivedEvent {}", event);
+        kafkaTemplate.send(DRIVER_ARRIVED_TOPIC, event.getTripId().toString(), event);
     }
 
 

@@ -6,7 +6,6 @@ import com.as.tripservice.dtos.NearbyDriverRequestDto;
 import com.as.tripservice.dtos.TripRequest;
 import com.as.tripservice.dtos.TripResponse;
 import com.as.tripservice.events.DriverAcceptedEvent;
-import com.as.tripservice.events.DriverArrivedEvent;
 import com.as.tripservice.events.DriverAssignedEvent;
 import com.as.tripservice.events.TripRequestedEvent;
 import com.as.tripservice.exceptions.TripNotFoundException;
@@ -151,24 +150,6 @@ public class TripServiceImpl implements TripService {
             log.warn("Optimistic locking failure while accepting trip {} by driver {}: {}", tripId, driverId, ex.getMessage());
             throw ex; // Controller should map to HTTP 409
         }
-    }
-
-    public void markDriverArrived(Long tripId) {
-
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new TripNotFoundException(tripId));
-
-        trip.setTripStatus(TripStatus.ARRIVED);
-        tripRepository.save(trip);
-
-        DriverArrivedEvent event = DriverArrivedEvent.builder()
-                .tripId(tripId)
-                .riderId(trip.getRiderId())
-                .driverId(trip.getDriverId())
-                .arrivedAt(Instant.now())
-                .build();
-
-        kafkaProducer.sendDriverArrivedEvent(event);
     }
 }
 

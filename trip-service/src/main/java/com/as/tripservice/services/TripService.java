@@ -8,4 +8,6 @@ public interface TripService {
     TripResponse createTrip(TripRequest tripRequest);
 
     TripResponse acceptTrip(Long tripId, Long driverId);
+
+    void markDriverArrived(Long tripId);
 }
