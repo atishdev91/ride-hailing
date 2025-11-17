@@ -21,6 +21,14 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
+        config.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, true);
+
+        config.put(JsonSerializer.TYPE_MAPPINGS,
+                "tripRequested:com.as.tripservice.events.TripRequestedEvent," +
+                        "driverAssigned:com.as.tripservice.events.DriverAssignedEvent," +
+                        "driverAccepted:com.as.tripservice.events.DriverAcceptedEvent");
+
         return new DefaultKafkaProducerFactory<>(config);
     }
 
@@ -29,3 +37,4 @@ public class KafkaProducerConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 }
+
