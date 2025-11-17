@@ -3,6 +3,7 @@ package com.as.notificationservice.kafka;
 
 import com.as.notificationservice.dtos.NotificationMessage;
 import com.as.notificationservice.events.DriverAcceptedEvent;
+import com.as.notificationservice.events.DriverArrivedEvent;
 import com.as.notificationservice.events.DriverAssignedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,5 +49,23 @@ public class NotificationKafkaConsumer {
                 "/topic/rider." + event.getRiderId(),
                 message
         );
+    }
+
+    @KafkaListener(topics = "driver-arrived", groupId = "notification-service-group")
+    public void handleDriverArrived(DriverArrivedEvent event) {
+
+        log.info("Received DriverArrivedEvent", event);
+
+        NotificationMessage message = NotificationMessage.builder()
+                .type("DRIVER_ARRIVED")
+                .data(event)
+                .message("Driver has arrived at pickup location")
+                .build();
+
+        messagingTemplate.convertAndSend(
+                "/topic/rider." + event.getRiderId(),
+                message
+        );
+
     }
 }
