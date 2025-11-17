@@ -36,7 +36,10 @@ public class KafkaConsumerConfig {
             setTypePrecedence(TypePrecedence.TYPE_ID);
             setIdClassMapping(Map.of(
                     "driverAssigned", com.as.notificationservice.events.DriverAssignedEvent.class,
-                    "driverAccepted", com.as.notificationservice.events.DriverAcceptedEvent.class
+                    "driverAccepted", com.as.notificationservice.events.DriverAcceptedEvent.class,
+                    "driverArrived", com.as.notificationservice.events.DriverArrivedEvent.class,
+                    "tripStarted", com.as.notificationservice.events.TripStarted.class,
+                    "tripCompleted", com.as.notificationservice.events.TripCompleted.class
             ));
         }});
 

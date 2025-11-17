@@ -45,8 +45,22 @@ public class TripController {
     }
 
     @PostMapping("/{tripId}/arrived")
-    public ResponseEntity<?> driverArrived(@PathVariable Long tripId) {
+    public ResponseEntity<Void> driverArrived(@PathVariable Long tripId) {
         tripService.markDriverArrived(tripId);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/{tripId}/start")
+    public ResponseEntity<Void> startTrip(@PathVariable Long tripId) {
+        tripService.startTrip(tripId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{tripId}/complete")
+    public ResponseEntity<Void> completeTrip(@PathVariable Long tripId) {
+        tripService.completeTrip(tripId);
+        return ResponseEntity.ok().build();
+    }
+
+
 }

@@ -5,10 +5,7 @@ import com.as.tripservice.dtos.DriverLocationDto;
 import com.as.tripservice.dtos.NearbyDriverRequestDto;
 import com.as.tripservice.dtos.TripRequest;
 import com.as.tripservice.dtos.TripResponse;
-import com.as.tripservice.events.DriverAcceptedEvent;
-import com.as.tripservice.events.DriverArrivedEvent;
-import com.as.tripservice.events.DriverAssignedEvent;
-import com.as.tripservice.events.TripRequestedEvent;
+import com.as.tripservice.events.*;
 import com.as.tripservice.exceptions.TripNotFoundException;
 import com.as.tripservice.kafka.TripKafkaProducer;
 import com.as.tripservice.mapper.EntityDtoMapper;
@@ -170,5 +167,62 @@ public class TripServiceImpl implements TripService {
 
         kafkaProducer.sendDriverArrivedEvent(event);
     }
+
+    @Override
+    public void startTrip(Long tripId) {
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new TripNotFoundException(tripId));
+
+        if(trip.getTripStatus() != TripStatus.ARRIVED) {
+            throw new IllegalStateException("Trip cannot be started in status: " + trip.getTripStatus());
+        }
+
+        trip.setTripStatus(TripStatus.STARTED);
+        tripRepository.save(trip);
+
+        TripStarted event = TripStarted.builder()
+                .tripId(tripId)
+                .driverId(trip.getDriverId())
+                .riderId(trip.getRiderId())
+                .startedAt(Instant.now())
+                .build();
+
+        kafkaProducer.sendTripStartedEvent(event);
+
+    }
+
+    @Override
+    public void completeTrip(Long tripId) {
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
+
+        if (trip.getTripStatus() != TripStatus.STARTED) {
+            throw new IllegalStateException("Trip cannot be completed before it starts");
+        }
+
+        trip.setTripStatus(TripStatus.COMPLETED);
+//        trip.setCompletedAt(Instant.now());
+
+        // TODO: dynamic fare calculation later
+//        double fare = 150.0; // placeholder
+
+//        trip.setFareAmount(fare);
+
+        tripRepository.save(trip);
+
+        TripCompleted event = TripCompleted.builder()
+                .tripId(trip.getTripId())
+                .driverId(trip.getDriverId())
+                .riderId(trip.getRiderId())
+                .completedAt(Instant.now())
+//                .fareAmount(fare)
+                .build();
+
+        kafkaProducer.sendTripCompletedEvent(event);
+    }
+
+
 }
 

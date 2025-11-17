@@ -1,9 +1,6 @@
 package com.as.tripservice.kafka;
 
-import com.as.tripservice.events.DriverAcceptedEvent;
-import com.as.tripservice.events.DriverArrivedEvent;
-import com.as.tripservice.events.DriverAssignedEvent;
-import com.as.tripservice.events.TripRequestedEvent;
+import com.as.tripservice.events.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -20,6 +17,8 @@ public class TripKafkaProducer {
     private static final String DRIVER_ASSIGNED_TOPIC = "driver-assigned";
     private static final String DRIVER_ACCEPTED_TOPIC = "driver-accepted";
     private static final String DRIVER_ARRIVED_TOPIC = "driver-arrived";
+    private static final String TRIP_STARTED_TOPIC = "trip-started";
+    private static final String TRIP_COMPLETED_TOPIC = "trip-completed";
 
     public void sendTripRequestedEvent(TripRequestedEvent event) {
         log.info("Publishing TripRequestedEvent {}", event);
@@ -39,6 +38,16 @@ public class TripKafkaProducer {
     public void sendDriverArrivedEvent(DriverArrivedEvent event) {
         log.info("Publishing DriverArrivedEvent {}", event);
         kafkaTemplate.send(DRIVER_ARRIVED_TOPIC, event.getTripId().toString(), event);
+    }
+
+    public void sendTripStartedEvent(TripStarted event) {
+        log.info("Publishing TripStartedEvent {}", event);
+        kafkaTemplate.send(TRIP_STARTED_TOPIC, event.getTripId().toString(), event);
+    }
+
+    public void sendTripCompletedEvent(TripCompleted event) {
+        log.info("Publishing TripCompletedEvent {}", event);
+        kafkaTemplate.send(TRIP_COMPLETED_TOPIC, event.getTripId().toString(), event);
     }
 
 

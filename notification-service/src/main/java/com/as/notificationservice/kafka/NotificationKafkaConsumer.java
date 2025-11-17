@@ -2,9 +2,7 @@ package com.as.notificationservice.kafka;
 
 
 import com.as.notificationservice.dtos.NotificationMessage;
-import com.as.notificationservice.events.DriverAcceptedEvent;
-import com.as.notificationservice.events.DriverArrivedEvent;
-import com.as.notificationservice.events.DriverAssignedEvent;
+import com.as.notificationservice.events.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -66,6 +64,40 @@ public class NotificationKafkaConsumer {
                 "/topic/rider." + event.getRiderId(),
                 message
         );
-
     }
+
+    @KafkaListener(topics = "trip-started", groupId = "notification-service-group")
+    public void handleTripStarted(TripStarted event) {
+
+        log.info("Received TripStartedEvent: {}", event);
+
+        NotificationMessage message = NotificationMessage.builder()
+                .type("TRIP_STARTED")
+                .message("Your trip has started")
+                .data(event)
+                .build();
+
+        messagingTemplate.convertAndSend(
+                "/topic/rider." + event.getRiderId(),
+                message
+        );
+    }
+
+    @KafkaListener(topics = "trip-completed", groupId = "notification-service-group")
+    public void handleTripCompleted(TripCompleted event) {
+        log.info("Received TripCompletedEvent: {}", event);
+
+        NotificationMessage message = NotificationMessage.builder()
+                .type("TRIP_COMPLETED")
+                .message("Your trip is completed")
+                .data(event)
+                .build();
+
+        messagingTemplate.convertAndSend(
+                "/topic/rider." + event.getRiderId(),
+                message
+        );
+    }
+
+
 }

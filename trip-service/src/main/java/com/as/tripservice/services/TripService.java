@@ -10,4 +10,8 @@ public interface TripService {
     TripResponse acceptTrip(Long tripId, Long driverId);
 
     void markDriverArrived(Long tripId);
+
+    void startTrip(Long tripId);
+
+    void completeTrip(Long tripId);
 }
