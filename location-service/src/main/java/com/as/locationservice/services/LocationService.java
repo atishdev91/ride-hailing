@@ -2,6 +2,8 @@ package com.as.locationservice.services;
 
 import com.as.locationservice.dtos.DriverLocationDto;
 import com.as.locationservice.dtos.NearbyDriverRequestDto;
+import com.as.locationservice.events.DriverLocationUpdatedEvent;
+import com.as.locationservice.kafka.LocationKafkaProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.geo.Circle;
@@ -12,6 +14,7 @@ import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.domain.geo.GeoLocation;
 import org.springframework.data.redis.domain.geo.Metrics;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -23,6 +26,7 @@ import java.util.List;
 public class LocationService implements CommandLineRunner {
 
     private final GeoOperations<String, String> geoOperations;
+    private final LocationKafkaProducer kafkaProducer;
 
     public static final String DRIVER_KEY = "driver_location";
 
@@ -30,6 +34,14 @@ public class LocationService implements CommandLineRunner {
 
         Point point = new Point(driverLocationDto.getLongitude(), driverLocationDto.getLatitude());
         geoOperations.add(DRIVER_KEY, point, String.valueOf(driverLocationDto.getDriverId()));
+
+        kafkaProducer.sendDriverLocationUpdatedEvent(
+                DriverLocationUpdatedEvent.builder()
+                        .driverId(driverLocationDto.getDriverId())
+                        .latitude(driverLocationDto.getLatitude())
+                        .longitude(driverLocationDto.getLongitude())
+                        .build()
+        );
         return true;
     }
 
