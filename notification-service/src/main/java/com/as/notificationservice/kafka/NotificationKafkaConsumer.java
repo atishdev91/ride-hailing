@@ -99,5 +99,17 @@ public class NotificationKafkaConsumer {
         );
     }
 
+    @KafkaListener(topics = "driver-location-updated", groupId = "notification-service-group")
+    public void handlerDriverLocationUpdated(DriverLocationUpdatedEvent event) {
+
+        log.info("Recieved DriverLocationUpdatedEvent {}", event);
+
+        messagingTemplate.convertAndSend(
+                "/topic/driver.location." + event.getDriverId(),
+                event
+        );
+
+    }
+
 
 }
