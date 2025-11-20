@@ -2,6 +2,7 @@ package com.as.tripservice.services;
 
 import com.as.tripservice.dtos.TripRequest;
 import com.as.tripservice.dtos.TripResponse;
+import com.as.tripservice.events.DriverLocationUpdatedEvent;
 
 public interface TripService {
 
@@ -16,4 +17,8 @@ public interface TripService {
     void completeTrip(Long tripId);
 
     void pullDriverLocation(Long driverId);
+
+    void checkDriverArrival(Long tripId);
+
+    void handleDriverLocationUpdate(DriverLocationUpdatedEvent event);
 }

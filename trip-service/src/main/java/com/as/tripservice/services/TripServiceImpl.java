@@ -12,6 +12,7 @@ import com.as.tripservice.mapper.EntityDtoMapper;
 import com.as.tripservice.models.Trip;
 import com.as.tripservice.models.TripStatus;
 import com.as.tripservice.repositories.TripRepository;
+import com.as.tripservice.util.HaversineUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,8 @@ public class TripServiceImpl implements TripService {
     private final TripRepository tripRepository;
     private final LocationServiceClient locationServiceClient;
     private final TripKafkaProducer kafkaProducer;
+
+    private static final double ARRIVAL_THRESHOLD_KM = 0.150; // 150 meters
 
     @Override
     @Transactional
@@ -227,6 +230,84 @@ public class TripServiceImpl implements TripService {
     public void pullDriverLocation(Long driverId) {
         DriverLocationDto dto = locationServiceClient.getCurrentLocation(driverId);
         log.info("Pulled location for driver {}", dto);
+    }
+
+    @Override
+    @Transactional
+    public void checkDriverArrival(Long tripId) {
+
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new TripNotFoundException(tripId));
+
+        if(trip.getTripStatus() != TripStatus.ACCEPTED) {
+            log.info("Trip {} is not accepted, skipping arrival check", tripId);
+            return;
+        }
+
+        Long driverId = trip.getDriverId();
+        DriverLocationDto currentLocation = locationServiceClient.getCurrentLocation(driverId);
+        log.info("Current location for driver {} is {}", driverId, currentLocation);
+
+        double distanceKm = HaversineUtil.distance(
+                trip.getStartLatitude(), trip.getStartLongitude(),
+                currentLocation.getLatitude(), currentLocation.getLongitude()
+        );
+
+        log.info("Distance to pickup is {} km", distanceKm);
+
+        if(distanceKm < ARRIVAL_THRESHOLD_KM) {
+            log.info("Driver {} arrived for trip {}", driverId, tripId);
+
+            trip.setTripStatus(TripStatus.ARRIVED);
+            tripRepository.save(trip);
+
+            DriverArrivedEvent event = DriverArrivedEvent.builder()
+                    .tripId(tripId)
+                    .riderId(trip.getRiderId())
+                    .driverId(trip.getDriverId())
+                    .arrivedAt(Instant.now())
+                    .build();
+
+            kafkaProducer.sendDriverArrivedEvent(event);
+        }
+
+    }
+
+    @Override
+    @Transactional
+    public void handleDriverLocationUpdate(DriverLocationUpdatedEvent event) {
+
+        // Find active trip for this driver
+        Trip trip = tripRepository
+                .findByDriverIdAndTripStatus(event.getDriverId(), TripStatus.ACCEPTED)
+                .orElse(null);
+
+        if (trip == null) {
+            return; // Driver is not currently en route
+        }
+
+        double distanceKm = HaversineUtil.distance(
+                trip.getStartLatitude(), trip.getStartLongitude(),
+                event.getLatitude(), event.getLongitude()
+        );
+
+        log.info("Driver {} distance to pickup = {} km", event.getDriverId(), distanceKm);
+
+        if (distanceKm < ARRIVAL_THRESHOLD_KM) {
+            log.info("Driver arrived automatically for trip {}", trip.getTripId());
+
+            trip.setTripStatus(TripStatus.ARRIVED);
+            tripRepository.save(trip);
+
+            kafkaProducer.sendDriverArrivedEvent(
+                    DriverArrivedEvent.builder()
+                            .tripId(trip.getTripId())
+                            .riderId(trip.getRiderId())
+                            .driverId(trip.getDriverId())
+                            .arrivedAt(Instant.now())
+                            .build()
+            );
+        }
     }
 
 
