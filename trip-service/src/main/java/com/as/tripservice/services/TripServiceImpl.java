@@ -223,6 +223,12 @@ public class TripServiceImpl implements TripService {
         kafkaProducer.sendTripCompletedEvent(event);
     }
 
+    @Override
+    public void pullDriverLocation(Long driverId) {
+        DriverLocationDto dto = locationServiceClient.getCurrentLocation(driverId);
+        log.info("Pulled location for driver {}", dto);
+    }
+
 
 }
 

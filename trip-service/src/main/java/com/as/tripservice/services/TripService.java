@@ -14,4 +14,6 @@ public interface TripService {
     void startTrip(Long tripId);
 
     void completeTrip(Long tripId);
+
+    void pullDriverLocation(Long driverId);
 }
