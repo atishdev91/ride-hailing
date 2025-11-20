@@ -286,6 +286,7 @@ public class TripServiceImpl implements TripService {
             return; // Driver is not currently en route
         }
 
+        // calculate distance to pickup
         double distanceKm = HaversineUtil.distance(
                 trip.getStartLatitude(), trip.getStartLongitude(),
                 event.getLatitude(), event.getLongitude()
@@ -293,6 +294,7 @@ public class TripServiceImpl implements TripService {
 
         log.info("Driver {} distance to pickup = {} km", event.getDriverId(), distanceKm);
 
+        // auto-arrival logic
         if (distanceKm < ARRIVAL_THRESHOLD_KM) {
             log.info("Driver arrived automatically for trip {}", trip.getTripId());
 
@@ -307,7 +309,26 @@ public class TripServiceImpl implements TripService {
                             .arrivedAt(Instant.now())
                             .build()
             );
+            return;
         }
+
+        // calculate ETA (minutes)
+
+        double avgSpeedKmPerMin = 0.50; // assumed
+        double etaMinutes = distanceKm / avgSpeedKmPerMin;
+
+        log.info("ETA for trip {} is {} minutes", trip.getTripId(), etaMinutes);
+
+        // publish eta updated event
+
+        kafkaProducer.sendDriverEtaUpdatedEvent(
+                DriverEtaUpdatedEvent.builder()
+                        .tripId(trip.getTripId())
+                        .riderId(trip.getRiderId())
+                        .driverId(trip.getDriverId())
+                        .etaMinutes(etaMinutes)
+                        .build()
+        );
     }
 
 

@@ -15,6 +15,6 @@ public class DriverEtaUpdatedEvent {
     private Long driverId;
     private Long riderId;
     private double distanceKm;
-    private Long etaSeconds;
-    private Instant updatedAt;
+    private double etaMinutes;
+
 }
