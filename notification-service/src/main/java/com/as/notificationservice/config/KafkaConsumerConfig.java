@@ -39,7 +39,8 @@ public class KafkaConsumerConfig {
                     "driverAccepted", com.as.notificationservice.events.DriverAcceptedEvent.class,
                     "driverArrived", com.as.notificationservice.events.DriverArrivedEvent.class,
                     "tripStarted", com.as.notificationservice.events.TripStarted.class,
-                    "tripCompleted", com.as.notificationservice.events.TripCompleted.class
+                    "tripCompleted", com.as.notificationservice.events.TripCompleted.class,
+                    "driverLocationUpdated", com.as.notificationservice.events.DriverLocationUpdatedEvent.class
             ));
         }});
 
