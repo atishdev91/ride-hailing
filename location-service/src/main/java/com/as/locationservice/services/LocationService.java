@@ -72,6 +72,21 @@ public class LocationService implements CommandLineRunner {
         return drivers;
     }
 
+    public DriverLocationDto getDriverLocation(Long driverId) {
+
+        // Query Redis using GEOHASH or POSITION
+        Point point = (Point) geoOperations.position(DRIVER_KEY, String.valueOf(driverId));
+
+        if(point == null) return null;
+
+        return DriverLocationDto.builder()
+                .driverId(driverId)
+                .latitude(point.getY())
+                .longitude(point.getX())
+                .build();
+
+    }
+
     @Override
     public void run(String... args) throws Exception {
 

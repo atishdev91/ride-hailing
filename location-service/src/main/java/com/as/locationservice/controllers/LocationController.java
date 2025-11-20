@@ -6,10 +6,7 @@ import com.as.locationservice.services.LocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -31,5 +28,12 @@ public class LocationController {
     public ResponseEntity<List<DriverLocationDto>> getNearbyDrivers(@RequestBody NearbyDriverRequestDto requestDto) {
         List<DriverLocationDto> drivers = locationService.findNearbyDrivers(requestDto);
         return ResponseEntity.status(HttpStatus.OK).body(drivers);
+    }
+
+    @GetMapping("/driver/{driverId}")
+    public ResponseEntity<DriverLocationDto> getDriverLocation(@PathVariable Long driverId) {
+
+        DriverLocationDto driverLocationDto = locationService.getDriverLocation(driverId);
+        return ResponseEntity.status(HttpStatus.OK).body(driverLocationDto);
     }
 }
