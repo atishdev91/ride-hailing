@@ -14,5 +14,6 @@ public class DriverLocationUpdatedEvent {
     private double longitude;
 
 // optional - if driver is on a trip
-//    private Long tripId;
+// nullable — if present, used to target the trip/rider
+    private Long tripId;
 }

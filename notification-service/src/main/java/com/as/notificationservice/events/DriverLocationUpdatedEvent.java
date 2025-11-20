@@ -1,5 +1,6 @@
 package com.as.notificationservice.events;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.*;
 
 @Getter
@@ -7,6 +8,8 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@JsonTypeName("driverLocationUpdated")
+
 public class DriverLocationUpdatedEvent {
 
     private Long driverId;
