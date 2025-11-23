@@ -1,6 +1,7 @@
 package com.as.locationservice.kafka;
 
 import com.as.commonevents.events.DriverRegisteredEvent;
+import com.as.commonevents.events.DriverStatusUpdatedEvent;
 import com.as.locationservice.dtos.DriverLocationDto;
 import com.as.locationservice.services.LocationService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,25 @@ public class LocationKafkaListener {
                 .build());
         log.info("Driver {} initialized in Redis", event.getDriverId());
     }
+
+    @KafkaListener(topics = "driver-status-updated", groupId = "location-service-group")
+    public void handleStatusUpdate(DriverStatusUpdatedEvent event) {
+
+        switch (event.getStatus()) {
+            case "AVAILABLE":
+                locationService.makeDriverAvailable(event.getDriverId());
+                break;
+            case "BUSY":
+            case "IN_TRIP":
+            case "OFFLINE":
+            case "ONLINE":
+                locationService.removeDriver(event.getDriverId());
+                break;
+        }
+    }
+
+
+
 //
 //    @KafkaListener(topics = "rider-registered", groupId = "location-service-group")
 //    public void handleRiderRegisteredEvent(RiderRegisteredEvent event) {

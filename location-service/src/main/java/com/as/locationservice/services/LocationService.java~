@@ -87,17 +87,6 @@ public class LocationService  {
 
     }
 
-    public void makeDriverAvailable(Long driverId) {
-        Point point = (Point) geoOperations.position(DRIVER_KEY, String.valueOf(driverId));
-        if(point != null) {
-            geoOperations.add(DRIVER_KEY, point, String.valueOf(driverId));
-        }
-    }
-
-    public void removeDriver(Long driverId) {
-        geoOperations.remove(DRIVER_KEY, String.valueOf(driverId));
-    }
-
 //    @Override
 //    public void run(String... args) throws Exception {
 //
