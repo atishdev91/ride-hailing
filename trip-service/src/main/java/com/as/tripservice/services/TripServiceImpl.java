@@ -5,7 +5,7 @@ import com.as.tripservice.dtos.DriverLocationDto;
 import com.as.tripservice.dtos.NearbyDriverRequestDto;
 import com.as.tripservice.dtos.TripRequest;
 import com.as.tripservice.dtos.TripResponse;
-import com.as.tripservice.events.*;
+import com.as.commonevents.events.*;
 import com.as.tripservice.exceptions.TripNotFoundException;
 import com.as.tripservice.kafka.TripKafkaProducer;
 import com.as.tripservice.mapper.EntityDtoMapper;
@@ -286,6 +286,8 @@ public class TripServiceImpl implements TripService {
             return; // Driver is not currently en route
         }
 
+        log.info("Trip lookup result for ETA: {}", trip);
+
         // calculate distance to pickup
         double distanceKm = HaversineUtil.distance(
                 trip.getStartLatitude(), trip.getStartLongitude(),
@@ -313,7 +315,6 @@ public class TripServiceImpl implements TripService {
         }
 
         // calculate ETA (minutes)
-
         double avgSpeedKmPerMin = 0.50; // assumed
         double etaMinutes = distanceKm / avgSpeedKmPerMin;
 

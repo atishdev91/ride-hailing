@@ -1,8 +1,9 @@
 package com.as.tripservice.services;
 
+import com.as.commonevents.events.DriverLocationUpdatedEvent;
 import com.as.tripservice.dtos.TripRequest;
 import com.as.tripservice.dtos.TripResponse;
-import com.as.tripservice.events.DriverLocationUpdatedEvent;
+
 
 public interface TripService {
 

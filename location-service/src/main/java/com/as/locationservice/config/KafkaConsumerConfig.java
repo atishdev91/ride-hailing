@@ -1,6 +1,6 @@
 package com.as.locationservice.config;
 
-import com.as.locationservice.events.DriverRegisteredEvent;
+import com.as.commonevents.events.DriverRegisteredEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
@@ -13,7 +13,6 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.as.locationservice.events.DriverRegisteredEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;

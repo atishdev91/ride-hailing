@@ -1,8 +1,7 @@
 package com.as.locationservice.kafka;
 
+import com.as.commonevents.events.DriverRegisteredEvent;
 import com.as.locationservice.dtos.DriverLocationDto;
-import com.as.locationservice.events.DriverRegisteredEvent;
-import com.as.locationservice.events.RiderRegisteredEvent;
 import com.as.locationservice.services.LocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

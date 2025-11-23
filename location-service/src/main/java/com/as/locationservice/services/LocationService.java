@@ -1,8 +1,8 @@
 package com.as.locationservice.services;
 
+import com.as.commonevents.events.DriverLocationUpdatedEvent;
 import com.as.locationservice.dtos.DriverLocationDto;
 import com.as.locationservice.dtos.NearbyDriverRequestDto;
-import com.as.locationservice.events.DriverLocationUpdatedEvent;
 import com.as.locationservice.kafka.LocationKafkaProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -23,7 +23,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class LocationService implements CommandLineRunner {
+public class LocationService  {
 
     private final GeoOperations<String, String> geoOperations;
     private final LocationKafkaProducer kafkaProducer;
@@ -87,25 +87,25 @@ public class LocationService implements CommandLineRunner {
 
     }
 
-    @Override
-    public void run(String... args) throws Exception {
-
-        addDriverLocation(DriverLocationDto.builder()
-                .driverId(1L)
-                .latitude(30.733)
-                .longitude(76.771)
-                .build());
-
-        addDriverLocation(DriverLocationDto.builder()
-                .driverId(2L)
-                .latitude(30.7333)
-                .longitude(76.7731)
-                .build());
-
-        addDriverLocation(DriverLocationDto.builder()
-                .driverId(3L)
-                .latitude(30.7341)
-                .longitude(76.7739)
-                .build());
-    }
+//    @Override
+//    public void run(String... args) throws Exception {
+//
+//        addDriverLocation(DriverLocationDto.builder()
+//                .driverId(1L)
+//                .latitude(30.733)
+//                .longitude(76.771)
+//                .build());
+//
+//        addDriverLocation(DriverLocationDto.builder()
+//                .driverId(2L)
+//                .latitude(30.7333)
+//                .longitude(76.7731)
+//                .build());
+//
+//        addDriverLocation(DriverLocationDto.builder()
+//                .driverId(3L)
+//                .latitude(30.7341)
+//                .longitude(76.7739)
+//                .build());
+//    }
 }

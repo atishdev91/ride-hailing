@@ -1,1 +1,13 @@
 rootProject.name = 'ride-hailing'
+
+include 'auth-service'
+include 'location-service'
+include 'trip-service'
+include 'notification-service'
+include 'common-events'
+
+project(':auth-service').projectDir = file('auth-service')
+project(':location-service').projectDir = file('location-service')
+project(':trip-service').projectDir = file('trip-service')
+project(':notification-service').projectDir = file('notification-service')
+project(':common-events').projectDir = file('common-events')

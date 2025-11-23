@@ -23,9 +23,8 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
 
         config.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, true);
-
         config.put(JsonSerializer.TYPE_MAPPINGS,
-                "driverLocationUpdated:com.as.locationservice.events.DriverLocationUpdatedEvent"
+                "driverLocationUpdated:com.as.commonevents.events.DriverLocationUpdatedEvent"
         );
 
         return new DefaultKafkaProducerFactory<>(config);

@@ -1,6 +1,6 @@
 package com.as.tripservice.kafka;
 
-import com.as.tripservice.events.*;
+import com.as.commonevents.events.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;

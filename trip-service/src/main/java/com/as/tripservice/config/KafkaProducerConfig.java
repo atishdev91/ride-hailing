@@ -25,13 +25,14 @@ public class KafkaProducerConfig {
         config.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, true);
 
         config.put(JsonSerializer.TYPE_MAPPINGS,
-                "tripRequested:com.as.tripservice.events.TripRequestedEvent," +
-                        "driverAssigned:com.as.tripservice.events.DriverAssignedEvent," +
-                        "driverAccepted:com.as.tripservice.events.DriverAcceptedEvent," +
-                        "driverArrived:com.as.tripservice.events.DriverArrivedEvent," +
-                        "tripStarted:com.as.tripservice.events.TripStarted," +
-                        "tripCompleted:com.as.tripservice.events.TripCompleted," +
-                        "driverEtaUpdated:com.as.tripservice.events.DriverEtaUpdatedEvent"
+                "tripRequested:com.as.commonevents.events.TripRequestedEvent," +
+                        "driverAssigned:com.as.commonevents.events.DriverAssignedEvent," +
+                        "driverAccepted:com.as.commonevents.events.DriverAcceptedEvent," +
+                        "driverArrived:com.as.commonevents.events.DriverArrivedEvent," +
+                        "tripStarted:com.as.commonevents.events.TripStarted," +
+                        "tripCompleted:com.as.commonevents.events.TripCompleted," +
+                        "driverLocationUpdated:com.as.commonevents.events.DriverLocationUpdatedEvent," +
+                        "driverEtaUpdated:com.as.commonevents.events.DriverEtaUpdatedEvent"
         );
 
         return new DefaultKafkaProducerFactory<>(config);

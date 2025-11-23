@@ -1,6 +1,6 @@
 package com.as.tripservice.kafka;
 
-import com.as.tripservice.events.DriverLocationUpdatedEvent;
+import com.as.commonevents.events.DriverLocationUpdatedEvent;
 import com.as.tripservice.services.TripService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
