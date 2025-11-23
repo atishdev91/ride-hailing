@@ -30,6 +30,12 @@ public class Driver extends BaseModel {
 
     private String vehicleNumber;
 
-    private boolean active;
+    private DriverStatus status;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) status = DriverStatus.OFFLINE;
+    }
+
 
 }
