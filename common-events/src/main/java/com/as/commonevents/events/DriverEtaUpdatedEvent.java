@@ -1,15 +1,17 @@
-package com.as.tripservice.events;
+package com.as.commonevents.events;
 
 import lombok.*;
 
-@Getter
-@Setter
+@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DriverAssignedEvent {
+public class DriverEtaUpdatedEvent {
 
     private Long tripId;
     private Long driverId;
     private Long riderId;
+    private double distanceKm;
+    private double etaMinutes;
+
 }

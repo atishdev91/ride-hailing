@@ -1,4 +1,4 @@
-package com.as.tripservice.events;
+package com.as.commonevents.events;
 
 import lombok.*;
 

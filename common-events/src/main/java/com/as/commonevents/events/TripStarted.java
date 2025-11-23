@@ -1,20 +1,17 @@
-package com.as.tripservice.events;
+package com.as.commonevents.events;
 
 import lombok.*;
 
 import java.time.Instant;
 
-@Getter
-@Setter
+@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DriverEtaUpdatedEvent {
+public class TripStarted {
 
     private Long tripId;
     private Long driverId;
     private Long riderId;
-    private double distanceKm;
-    private double etaMinutes;
-
+    private Instant startedAt;
 }

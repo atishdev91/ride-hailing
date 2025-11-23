@@ -1,15 +1,14 @@
-package com.as.notificationservice.events;
+package com.as.commonevents.events;
 
 import lombok.*;
 
 import java.time.Instant;
 
-@Getter
-@Setter
+@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DriverAcceptedEvent implements DomainEvent {
+public class DriverAcceptedEvent  {
 
     private Long tripId;
     private Long driverId;
