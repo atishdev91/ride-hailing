@@ -8,10 +8,12 @@ import com.as.authservice.repositories.DriverRepository;
 import com.as.commonevents.events.DriverStatusUpdatedEvent;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DriverService {
 
     private final DriverRepository driverRepository;
@@ -32,6 +34,8 @@ public class DriverService {
                         .status(value)
                         .build()
         );
+
+        log.info("Driver {} status updated to {}", driverId, value);
 
     }
 }

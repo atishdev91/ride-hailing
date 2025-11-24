@@ -35,7 +35,7 @@ spring:
           driverAccepted:com.as.commonevents.events.DriverAcceptedEvent,
           driverArrived:com.as.commonevents.events.DriverArrivedEvent,
           tripStarted:com.as.commonevents.events.TripStarted,
-          tripCompleted:com.as.commonevents.events.TripCompleted
+          tripCompleted:com.as.commonevents.events.TripCompleted,
           driverStatusUpdated:com.as.commonevents.events.DriverStatusUpdatedEvent
 
 server:

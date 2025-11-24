@@ -37,11 +37,17 @@ public class LocationKafkaListener {
                 locationService.makeDriverAvailable(event.getDriverId());
                 break;
             case "BUSY":
+                break;
             case "IN_TRIP":
+                break;
             case "OFFLINE":
-            case "ONLINE":
                 locationService.removeDriver(event.getDriverId());
                 break;
+
+            case "ONLINE":
+                // do nothing
+                break;
+
         }
     }
 

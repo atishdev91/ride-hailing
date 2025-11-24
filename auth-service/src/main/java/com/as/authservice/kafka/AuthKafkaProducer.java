@@ -1,12 +1,11 @@
 package com.as.authservice.kafka;
 
-import com.as.authservice.events.DriverRegisteredEvent;
 import com.as.authservice.events.RiderRegisteredEvent;
+import com.as.commonevents.events.DriverRegisteredEvent;
 import com.as.commonevents.events.DriverStatusUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 @Service

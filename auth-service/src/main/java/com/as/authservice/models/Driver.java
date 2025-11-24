@@ -30,6 +30,7 @@ public class Driver extends BaseModel {
 
     private String vehicleNumber;
 
+    @Enumerated(EnumType.STRING)
     private DriverStatus status;
 
     @PrePersist

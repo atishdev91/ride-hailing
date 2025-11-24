@@ -49,7 +49,7 @@ public class EntityDtoMapper {
                 .phoneNumber(driver.getPhoneNumber())
                 .licenseNumber(driver.getLicenseNumber())
                 .vehicleNumber(driver.getVehicleNumber())
-                .active(driver.isActive())
+//                .active(driver.isActive())
                 .build();
         return driverSignupResponse;
     }

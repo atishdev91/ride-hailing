@@ -35,6 +35,14 @@ public class LocationService  {
         Point point = new Point(driverLocationDto.getLongitude(), driverLocationDto.getLatitude());
         geoOperations.add(DRIVER_KEY, point, String.valueOf(driverLocationDto.getDriverId()));
 
+        return true;
+    }
+
+    public boolean updateDriverLocation(DriverLocationDto driverLocationDto) {
+
+        Point point = new Point(driverLocationDto.getLongitude(), driverLocationDto.getLatitude());
+        geoOperations.add(DRIVER_KEY, point, String.valueOf(driverLocationDto.getDriverId()));
+
         kafkaProducer.sendDriverLocationUpdatedEvent(
                 DriverLocationUpdatedEvent.builder()
                         .driverId(driverLocationDto.getDriverId())
@@ -75,9 +83,11 @@ public class LocationService  {
     public DriverLocationDto getDriverLocation(Long driverId) {
 
         // Query Redis using GEOHASH or POSITION
-        Point point = (Point) geoOperations.position(DRIVER_KEY, String.valueOf(driverId));
+        List<Point> points = geoOperations.position(DRIVER_KEY, String.valueOf(driverId));
+        if (points == null || points.isEmpty()) return null;
 
-        if(point == null) return null;
+        Point point = points.get(0);
+
 
         return DriverLocationDto.builder()
                 .driverId(driverId)
@@ -88,11 +98,18 @@ public class LocationService  {
     }
 
     public void makeDriverAvailable(Long driverId) {
-        Point point = (Point) geoOperations.position(DRIVER_KEY, String.valueOf(driverId));
-        if(point != null) {
-            geoOperations.add(DRIVER_KEY, point, String.valueOf(driverId));
+
+        List<Point> positions = geoOperations.position(DRIVER_KEY, String.valueOf(driverId));
+
+        if (positions == null || positions.isEmpty()) {
+            return;
         }
+
+        Point point = positions.get(0);
+
+        geoOperations.add(DRIVER_KEY, point, String.valueOf(driverId));
     }
+
 
     public void removeDriver(Long driverId) {
         geoOperations.remove(DRIVER_KEY, String.valueOf(driverId));

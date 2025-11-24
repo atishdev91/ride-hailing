@@ -1,5 +1,6 @@
 package com.as.authservice.dtos;
 
+import com.as.authservice.models.DriverStatus;
 import lombok.*;
 
 @Getter
@@ -21,5 +22,5 @@ public class DriverSignupResponse {
 
     private String vehicleNumber;
 
-    private boolean active;
+//    private DriverStatus status;
 }

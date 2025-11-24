@@ -21,7 +21,8 @@ public class AuthSecurityConfig {
         return http
                 .csrf(csrfConfig -> csrfConfig.disable())
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/v1/auth/**").permitAll())
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/drivers/**").permitAll())
                 .sessionManagement(sessionConfig -> sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

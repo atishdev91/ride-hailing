@@ -9,7 +9,6 @@ CREATE TABLE driver
     phone_number   VARCHAR(10)  NULL,
     license_number VARCHAR(255) NULL,
     vehicle_number VARCHAR(255) NULL,
-    active         BIT(1)       NOT NULL,
     CONSTRAINT pk_driver PRIMARY KEY (driver_id)
 );
 

@@ -1,18 +1,20 @@
 package com.as.authservice.services;
 
 import com.as.authservice.dtos.*;
-import com.as.authservice.events.DriverRegisteredEvent;
 import com.as.authservice.events.RiderRegisteredEvent;
 import com.as.authservice.exceptions.DriverNotFoundException;
 import com.as.authservice.exceptions.InvalidCredentialsException;
 import com.as.authservice.exceptions.RiderNotFoundException;
 import com.as.authservice.kafka.AuthKafkaProducer;
+import com.as.authservice.models.DriverStatus;
 import com.as.authservice.util.JWTUtils;
 import com.as.authservice.mappers.EntityDtoMapper;
 import com.as.authservice.models.Driver;
 import com.as.authservice.models.Rider;
 import com.as.authservice.repositories.DriverRepository;
 import com.as.authservice.repositories.RiderRepository;
+import com.as.commonevents.events.DriverRegisteredEvent;
+import com.as.commonevents.events.DriverStatusUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -56,7 +58,8 @@ public class AuthServiceImpl implements AuthService {
                 .phoneNumber(signupRequest.getPhoneNumber())
                 .licenseNumber(signupRequest.getLicenseNumber())
                 .vehicleNumber(signupRequest.getVehicleNumber())
-                .active(true)
+//                .active(true)
+                .status(DriverStatus.OFFLINE)
                 .build();
 
         Driver savedDriver = driverRepository.save(driver);
@@ -88,6 +91,14 @@ public class AuthServiceImpl implements AuthService {
             Driver driver = driverRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new DriverNotFoundException(request.getEmail()));
             if(passwordEncoder.matches(password, driver.getPassword())) {
+
+                driver.setStatus(DriverStatus.ONLINE);
+                driverRepository.save(driver);
+
+                kafkaProducer.sendDriverStatusUpdateEvent(
+                        new DriverStatusUpdatedEvent(driver.getDriverId(), "ONLINE")
+                );
+
                 String token = jwtUtils.generateToken(driver.getDriverId(), email, role);
                 return token;
             }

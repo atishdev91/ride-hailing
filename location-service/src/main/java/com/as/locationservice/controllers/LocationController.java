@@ -17,11 +17,18 @@ public class LocationController {
 
     private final LocationService locationService;
 
-    @PostMapping("/update")
+    @PostMapping("/add")
     public ResponseEntity<Boolean> saveDriverLocation(@RequestBody DriverLocationDto driverLocationDto) {
 
         boolean response = locationService.addDriverLocation(driverLocationDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/update")
+    public ResponseEntity<Boolean> updateDriverLocation(@RequestBody DriverLocationDto driverLocationDto) {
+
+        boolean response = locationService.updateDriverLocation(driverLocationDto);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/nearby/drivers")
