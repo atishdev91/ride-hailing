@@ -20,6 +20,7 @@ public class TripKafkaProducer {
     private static final String TRIP_STARTED_TOPIC = "trip-started";
     private static final String TRIP_COMPLETED_TOPIC = "trip-completed";
     private static final String DRIVER_ETA_UPDATED_TOPIC = "driver-eta-updated";
+    private static final String DRIVER_STATUS_TOPIC = "driver-status-updated";
 
     public void sendTripRequestedEvent(TripRequestedEvent event) {
         log.info("Publishing TripRequestedEvent {}", event);
@@ -54,6 +55,11 @@ public class TripKafkaProducer {
     public void sendDriverEtaUpdatedEvent(DriverEtaUpdatedEvent event) {
         log.info("Publishing DriverEtaUpdatedEvent {}", event);
         kafkaTemplate.send(DRIVER_ETA_UPDATED_TOPIC, event.getTripId().toString(), event);
+    }
+
+    public void sendDriverStatusUpdatedEvent(DriverStatusUpdatedEvent event) {
+        log.info("Publishing DriverStatusUpdatedEvent {}", event);
+        kafkaTemplate.send(DRIVER_STATUS_TOPIC, event.getDriverId().toString(), event);
     }
 
 

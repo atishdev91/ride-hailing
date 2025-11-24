@@ -82,6 +82,14 @@ public class TripServiceImpl implements TripService {
                 .riderId(tripRequest.getRiderId())
                 .build());
 
+        kafkaProducer.sendDriverStatusUpdatedEvent(
+                DriverStatusUpdatedEvent.builder()
+                        .driverId(selectedDriver.getDriverId())
+                        .status("BUSY")
+                        .build()
+        );
+
+
         log.info("Nearby drivers received: {}", nearbyDrivers);
 
 
@@ -142,6 +150,13 @@ public class TripServiceImpl implements TripService {
                     .build();
 
             kafkaProducer.sendDriverAcceptedEvent(evt);
+
+            kafkaProducer.sendDriverStatusUpdatedEvent(
+                    DriverStatusUpdatedEvent.builder()
+                            .driverId(saved.getDriverId())
+                            .status("IN_TRIP")
+                            .build()
+            );
 
             log.info("Trip {} accepted by driver {}", tripId, driverId);
             TripResponse response = EntityDtoMapper.map(saved);
@@ -224,6 +239,13 @@ public class TripServiceImpl implements TripService {
                 .build();
 
         kafkaProducer.sendTripCompletedEvent(event);
+
+        kafkaProducer.sendDriverStatusUpdatedEvent(
+                DriverStatusUpdatedEvent.builder()
+                        .driverId(trip.getDriverId())
+                        .status("AVAILABLE")
+                        .build()
+        );
     }
 
     @Override
