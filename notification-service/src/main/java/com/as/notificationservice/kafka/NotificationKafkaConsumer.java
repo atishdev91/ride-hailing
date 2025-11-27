@@ -102,7 +102,7 @@ public class NotificationKafkaConsumer {
     @KafkaListener(topics = "driver-location-updated", groupId = "notification-service-group")
     public void handlerDriverLocationUpdated(DriverLocationUpdatedEvent event) {
 
-        log.info("Recieved DriverLocationUpdatedEvent {}", event);
+        log.info("Received DriverLocationUpdatedEvent {}", event);
 
         NotificationMessage msg = NotificationMessage.builder()
                 .type("DRIVER_LOCATION_UPDATED")

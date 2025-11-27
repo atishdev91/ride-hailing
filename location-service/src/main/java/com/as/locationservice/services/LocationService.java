@@ -5,16 +5,13 @@ import com.as.locationservice.dtos.DriverLocationDto;
 import com.as.locationservice.dtos.NearbyDriverRequestDto;
 import com.as.locationservice.kafka.LocationKafkaProducer;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.geo.Circle;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.GeoOperations;
-import org.springframework.data.redis.domain.geo.GeoLocation;
 import org.springframework.data.redis.domain.geo.Metrics;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -64,7 +61,7 @@ public class LocationService  {
         Circle circle = new Circle(point, distance);
         GeoResults<RedisGeoCommands.GeoLocation<String>> response = geoOperations.radius(DRIVER_KEY, circle, args);
 
-        if (response == null) return List.of();
+        if (response == null) return List.of(); // work on this?
 
         List<DriverLocationDto> drivers = new ArrayList<>();
         response.getContent().stream()
@@ -115,25 +112,4 @@ public class LocationService  {
         geoOperations.remove(DRIVER_KEY, String.valueOf(driverId));
     }
 
-//    @Override
-//    public void run(String... args) throws Exception {
-//
-//        addDriverLocation(DriverLocationDto.builder()
-//                .driverId(1L)
-//                .latitude(30.733)
-//                .longitude(76.771)
-//                .build());
-//
-//        addDriverLocation(DriverLocationDto.builder()
-//                .driverId(2L)
-//                .latitude(30.7333)
-//                .longitude(76.7731)
-//                .build());
-//
-//        addDriverLocation(DriverLocationDto.builder()
-//                .driverId(3L)
-//                .latitude(30.7341)
-//                .longitude(76.7739)
-//                .build());
-//    }
 }

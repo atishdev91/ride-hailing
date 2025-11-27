@@ -16,13 +16,11 @@ import com.as.tripservice.util.HaversineUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -313,46 +311,16 @@ public class TripServiceImpl implements TripService {
     @Transactional
     public void handleDriverLocationUpdate(DriverLocationUpdatedEvent event) {
 
-        // Attempt to find the most relevant ACCEPTED trip for this driver
-        Optional<Trip> tripOpt = Optional.empty();
+        // Find active trip for this driver
+        Trip trip = tripRepository
+                .findByDriverIdAndTripStatus(event.getDriverId(), TripStatus.ACCEPTED)
+                .orElse(null);
 
-        try {
-            // Use new repository method if available (recommended)
-            tripOpt = tripRepository.findTopByDriverIdAndTripStatusOrderByTripIdDesc(event.getDriverId(), TripStatus.ACCEPTED);
-        } catch (Exception ex) {
-            // fallback: try finding all and pick first (compatibility if repo method not present)
-            log.debug("findTopBy... not available or failed; falling back to findAllByDriverIdAndTripStatus: {}", ex.getMessage());
-            try {
-                List<Trip> all = tripRepository.findAllByDriverIdAndTripStatus(event.getDriverId(), TripStatus.ACCEPTED);
-                if (all != null && !all.isEmpty()) {
-                    tripOpt = Optional.of(all.get(0));
-                }
-            } catch (IncorrectResultSizeDataAccessException ir) {
-                log.warn("Multiple accepted trips found for driver {}: {}", event.getDriverId(), ir.getMessage());
-            } catch (Exception e) {
-                log.warn("Fallback lookup failed for driver {}: {}", event.getDriverId(), e.getMessage());
-            }
+        if (trip == null) {
+            return; // Driver is not currently en route
         }
 
-        if (tripOpt.isEmpty()) {
-            // nothing to do — driver not en-route (or DB inconsistent)
-            log.debug("No ACCEPTED trip found for driver {} — ignoring location update", event.getDriverId());
-            return;
-        }
-
-        Trip trip = tripOpt.get();
-
-        // Guard: ensure event driver matches the trip driver (should always be true)
-        if (!event.getDriverId().equals(trip.getDriverId())) {
-            log.warn("Ignoring location update from unassigned driver {} for trip {}", event.getDriverId(), trip.getTripId());
-            return;
-        }
-
-        // Only act on location updates when trip is in ACCEPTED state (we used find by status already)
-        if (trip.getTripStatus() != TripStatus.ACCEPTED) {
-            log.debug("Trip {} in state {} — ignoring location update", trip.getTripId(), trip.getTripStatus());
-            return;
-        }
+        log.info("Trip lookup result for ETA: {}", trip);
 
         // calculate distance to pickup
         double distanceKm = HaversineUtil.distance(
@@ -387,6 +355,7 @@ public class TripServiceImpl implements TripService {
         log.info("ETA for trip {} is {} minutes", trip.getTripId(), etaMinutes);
 
         // publish eta updated event
+
         kafkaProducer.sendDriverEtaUpdatedEvent(
                 DriverEtaUpdatedEvent.builder()
                         .tripId(trip.getTripId())
@@ -396,66 +365,6 @@ public class TripServiceImpl implements TripService {
                         .build()
         );
     }
-
-
-//    @Override
-//    @Transactional
-//    public void handleDriverLocationUpdate(DriverLocationUpdatedEvent event) {
-//
-//        // Find active trip for this driver
-//        Trip trip = tripRepository
-//                .findByDriverIdAndTripStatus(event.getDriverId(), TripStatus.ACCEPTED)
-//                .orElse(null);
-//
-//        if (trip == null) {
-//            return; // Driver is not currently en route
-//        }
-//
-//        log.info("Trip lookup result for ETA: {}", trip);
-//
-//        // calculate distance to pickup
-//        double distanceKm = HaversineUtil.distance(
-//                trip.getStartLatitude(), trip.getStartLongitude(),
-//                event.getLatitude(), event.getLongitude()
-//        );
-//
-//        log.info("Driver {} distance to pickup = {} km", event.getDriverId(), distanceKm);
-//
-//        // auto-arrival logic
-//        if (distanceKm < ARRIVAL_THRESHOLD_KM) {
-//            log.info("Driver arrived automatically for trip {}", trip.getTripId());
-//
-//            trip.setTripStatus(TripStatus.ARRIVED);
-//            tripRepository.save(trip);
-//
-//            kafkaProducer.sendDriverArrivedEvent(
-//                    DriverArrivedEvent.builder()
-//                            .tripId(trip.getTripId())
-//                            .riderId(trip.getRiderId())
-//                            .driverId(trip.getDriverId())
-//                            .arrivedAt(Instant.now())
-//                            .build()
-//            );
-//            return;
-//        }
-//
-//        // calculate ETA (minutes)
-//        double avgSpeedKmPerMin = 0.50; // assumed
-//        double etaMinutes = distanceKm / avgSpeedKmPerMin;
-//
-//        log.info("ETA for trip {} is {} minutes", trip.getTripId(), etaMinutes);
-//
-//        // publish eta updated event
-//
-//        kafkaProducer.sendDriverEtaUpdatedEvent(
-//                DriverEtaUpdatedEvent.builder()
-//                        .tripId(trip.getTripId())
-//                        .riderId(trip.getRiderId())
-//                        .driverId(trip.getDriverId())
-//                        .etaMinutes(etaMinutes)
-//                        .build()
-//        );
-//    }
 
     private void validateStateTransition(Trip trip, TripStatus newStatus) {
 
