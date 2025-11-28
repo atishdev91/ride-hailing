@@ -20,6 +20,7 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,10 @@ public class TripServiceImpl implements TripService {
     private final TripKafkaProducer kafkaProducer;
 
     private static final double ARRIVAL_THRESHOLD_KM = 0.150; // 150 meters
+    private static final double BASE_FARE = 40.0;
+    private static final double COST_PER_KM = 12.0;
+    private static final double COST_PER_MIN = 1.0;
+    private static final double MIN_FARE = 60.0;
 
     @Override
     @Transactional
@@ -211,6 +216,8 @@ public class TripServiceImpl implements TripService {
         }
 
         trip.setTripStatus(TripStatus.STARTED);
+        trip.setStartedAt(Instant.now());
+        trip.setDistanceKm(0.0);
         tripRepository.save(trip);
 
         TripStarted event = TripStarted.builder()
@@ -237,7 +244,19 @@ public class TripServiceImpl implements TripService {
         }
 
         trip.setTripStatus(TripStatus.COMPLETED);
-//        trip.setCompletedAt(Instant.now());
+        trip.setCompletedAt(Instant.now());
+
+        long minutes = Duration.between(trip.getStartedAt(), trip.getCompletedAt()).toMinutes();
+
+        double fare =
+                BASE_FARE +
+                        (trip.getDistanceKm() * COST_PER_KM) +
+                        (minutes * COST_PER_MIN);
+
+        if (fare < MIN_FARE) fare = MIN_FARE;
+
+        trip.setFare(fare);
+
         tripRepository.save(trip);
 
         TripCompleted event = TripCompleted.builder()
@@ -245,7 +264,8 @@ public class TripServiceImpl implements TripService {
                 .driverId(trip.getDriverId())
                 .riderId(trip.getRiderId())
                 .completedAt(Instant.now())
-//                .fareAmount(fare)
+                .fare(fare)
+                .distanceKm(trip.getDistanceKm())
                 .build();
 
         kafkaProducer.sendTripCompletedEvent(event);
@@ -348,11 +368,18 @@ public class TripServiceImpl implements TripService {
             return;
         }
 
-        // Only act on location updates when trip is in ACCEPTED state (we used find by status already)
-        if (trip.getTripStatus() != TripStatus.ACCEPTED) {
-            log.debug("Trip {} in state {} — ignoring location update", trip.getTripId(), trip.getTripStatus());
+//        // Only act on location updates when trip is in ACCEPTED state (we used find by status already)
+//        if (trip.getTripStatus() != TripStatus.ACCEPTED) {
+//            log.debug("Trip {} in state {} — ignoring location update", trip.getTripId(), trip.getTripStatus());
+//            return;
+//        }
+
+        // Allow ACCEPTED (for ETA + arrival logic) and STARTED (for distance updates)
+        if (trip.getTripStatus() != TripStatus.ACCEPTED &&
+                trip.getTripStatus() != TripStatus.STARTED) {
             return;
         }
+
 
         // calculate distance to pickup
         double distanceKm = HaversineUtil.distance(
@@ -395,6 +422,25 @@ public class TripServiceImpl implements TripService {
                         .etaMinutes(etaMinutes)
                         .build()
         );
+
+        if (trip.getTripStatus() == TripStatus.STARTED) {
+
+            // step 1: compute incremental distance
+            double deltaKm = HaversineUtil.distance(
+                    trip.getLastLatitude(), trip.getLastLongitude(),
+                    event.getLatitude(), event.getLongitude()
+            );
+
+            // step 2: add to running total
+            trip.setDistanceKm(trip.getDistanceKm() + deltaKm);
+
+            // step 3: update last known coordinates
+            trip.setLastLatitude(event.getLatitude());
+            trip.setLastLongitude(event.getLongitude());
+
+            tripRepository.save(trip);
+        }
+
     }
 
 

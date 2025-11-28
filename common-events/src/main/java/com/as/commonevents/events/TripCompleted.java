@@ -14,5 +14,6 @@ public class TripCompleted {
     private Long driverId;
     private Long riderId;
     private Instant completedAt;
-//    private Double fareAmount;
+    private Double fare;
+    private Double distanceKm;
 }

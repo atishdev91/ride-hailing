@@ -3,6 +3,8 @@ package com.as.tripservice.models;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,6 +31,18 @@ public class Trip extends BaseModel{
     private Double endLatitude;
 
     private Double endLongitude;
+
+    private Double distanceKm;
+
+    private Double fare;
+
+    private Instant startedAt;
+
+    private Instant completedAt;
+
+    private Double lastLatitude;
+
+    private Double lastLongitude;
 
     // @Version is essential: the first successful update will
     // increment it,
