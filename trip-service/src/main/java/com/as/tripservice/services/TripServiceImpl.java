@@ -218,6 +218,15 @@ public class TripServiceImpl implements TripService {
         trip.setTripStatus(TripStatus.STARTED);
         trip.setStartedAt(Instant.now());
         trip.setDistanceKm(0.0);
+
+        DriverLocationDto loc = locationServiceClient.getCurrentLocation(trip.getDriverId());
+        if (loc != null) {
+            trip.setLastLatitude(loc.getLatitude());
+            trip.setLastLongitude(loc.getLongitude());
+        } else {
+            log.warn("No location available for driver {} when starting trip {}", trip.getDriverId(), tripId);
+        }
+
         tripRepository.save(trip);
 
         TripStarted event = TripStarted.builder()
@@ -333,115 +342,108 @@ public class TripServiceImpl implements TripService {
     @Transactional
     public void handleDriverLocationUpdate(DriverLocationUpdatedEvent event) {
 
-        // Attempt to find the most relevant ACCEPTED trip for this driver
+        // Find the most relevant ACCEPTED or STARTED trip for this driver
         Optional<Trip> tripOpt = Optional.empty();
-
         try {
-            // Use new repository method if available (recommended)
             tripOpt = tripRepository.findTopByDriverIdAndTripStatusOrderByTripIdDesc(event.getDriverId(), TripStatus.ACCEPTED);
+            if (tripOpt.isEmpty()) {
+                tripOpt = tripRepository.findTopByDriverIdAndTripStatusOrderByTripIdDesc(event.getDriverId(), TripStatus.STARTED);
+            }
         } catch (Exception ex) {
-            // fallback: try finding all and pick first (compatibility if repo method not present)
-            log.debug("findTopBy... not available or failed; falling back to findAllByDriverIdAndTripStatus: {}", ex.getMessage());
-            try {
-                List<Trip> all = tripRepository.findAllByDriverIdAndTripStatus(event.getDriverId(), TripStatus.ACCEPTED);
-                if (all != null && !all.isEmpty()) {
-                    tripOpt = Optional.of(all.get(0));
-                }
-            } catch (IncorrectResultSizeDataAccessException ir) {
-                log.warn("Multiple accepted trips found for driver {}: {}", event.getDriverId(), ir.getMessage());
-            } catch (Exception e) {
-                log.warn("Fallback lookup failed for driver {}: {}", event.getDriverId(), e.getMessage());
+            // fallback
+            List<Trip> allAccepted = tripRepository.findAllByDriverIdAndTripStatus(event.getDriverId(), TripStatus.ACCEPTED);
+            if (allAccepted != null && !allAccepted.isEmpty()) tripOpt = Optional.of(allAccepted.get(0));
+            else {
+                List<Trip> allStarted = tripRepository.findAllByDriverIdAndTripStatus(event.getDriverId(), TripStatus.STARTED);
+                if (allStarted != null && !allStarted.isEmpty()) tripOpt = Optional.of(allStarted.get(0));
             }
         }
 
         if (tripOpt.isEmpty()) {
-            // nothing to do — driver not en-route (or DB inconsistent)
-            log.debug("No ACCEPTED trip found for driver {} — ignoring location update", event.getDriverId());
+            log.debug("No active trip found for driver {} — ignoring location update", event.getDriverId());
             return;
         }
 
         Trip trip = tripOpt.get();
 
-        // Guard: ensure event driver matches the trip driver (should always be true)
-        if (!event.getDriverId().equals(trip.getDriverId())) {
-            log.warn("Ignoring location update from unassigned driver {} for trip {}", event.getDriverId(), trip.getTripId());
+        // guard: ensure correct driver
+        if (trip.getDriverId() == null || !trip.getDriverId().equals(event.getDriverId())) {
+            log.warn("Location event driver {} doesn't match trip {} driver {}", event.getDriverId(), trip.getTripId(), trip.getDriverId());
             return;
         }
 
-//        // Only act on location updates when trip is in ACCEPTED state (we used find by status already)
-//        if (trip.getTripStatus() != TripStatus.ACCEPTED) {
-//            log.debug("Trip {} in state {} — ignoring location update", trip.getTripId(), trip.getTripStatus());
-//            return;
-//        }
+        // ---- Arrival / ETA logic when ACCEPTED ----
+        if (trip.getTripStatus() == TripStatus.ACCEPTED) {
+            double distanceKm = HaversineUtil.distance(trip.getStartLatitude(), trip.getStartLongitude(),
+                    event.getLatitude(), event.getLongitude());
 
-        // Allow ACCEPTED (for ETA + arrival logic) and STARTED (for distance updates)
-        if (trip.getTripStatus() != TripStatus.ACCEPTED &&
-                trip.getTripStatus() != TripStatus.STARTED) {
-            return;
-        }
+            log.info("Driver {} distance to pickup = {} km", event.getDriverId(), distanceKm);
 
+            if (distanceKm < ARRIVAL_THRESHOLD_KM) {
+                log.info("Driver {} auto-arrived for trip {}", event.getDriverId(), trip.getTripId());
+                trip.setTripStatus(TripStatus.ARRIVED);
+                tripRepository.save(trip);
 
-        // calculate distance to pickup
-        double distanceKm = HaversineUtil.distance(
-                trip.getStartLatitude(), trip.getStartLongitude(),
-                event.getLatitude(), event.getLongitude()
-        );
-
-        log.info("Driver {} distance to pickup = {} km", event.getDriverId(), distanceKm);
-
-        // auto-arrival logic
-        if (distanceKm < ARRIVAL_THRESHOLD_KM) {
-            log.info("Driver arrived automatically for trip {}", trip.getTripId());
-
-            trip.setTripStatus(TripStatus.ARRIVED);
-            tripRepository.save(trip);
-
-            kafkaProducer.sendDriverArrivedEvent(
-                    DriverArrivedEvent.builder()
-                            .tripId(trip.getTripId())
-                            .riderId(trip.getRiderId())
-                            .driverId(trip.getDriverId())
-                            .arrivedAt(Instant.now())
-                            .build()
-            );
-            return;
-        }
-
-        // calculate ETA (minutes)
-        double avgSpeedKmPerMin = 0.50; // assumed
-        double etaMinutes = distanceKm / avgSpeedKmPerMin;
-
-        log.info("ETA for trip {} is {} minutes", trip.getTripId(), etaMinutes);
-
-        // publish eta updated event
-        kafkaProducer.sendDriverEtaUpdatedEvent(
-                DriverEtaUpdatedEvent.builder()
+                kafkaProducer.sendDriverArrivedEvent(DriverArrivedEvent.builder()
                         .tripId(trip.getTripId())
                         .riderId(trip.getRiderId())
                         .driverId(trip.getDriverId())
-                        .etaMinutes(etaMinutes)
+                        .arrivedAt(Instant.now())
                         .build()
-        );
+                );
+                return;
+            }
 
+            // ETA publish (same as before)
+            double avgSpeedKmPerMin = 0.50;
+            double etaMinutes = distanceKm / avgSpeedKmPerMin;
+            kafkaProducer.sendDriverEtaUpdatedEvent(DriverEtaUpdatedEvent.builder()
+                    .tripId(trip.getTripId())
+                    .riderId(trip.getRiderId())
+                    .driverId(trip.getDriverId())
+                    .etaMinutes(etaMinutes)
+                    .build());
+        }
+
+        // ---- Distance tracking during STARTED ----
         if (trip.getTripStatus() == TripStatus.STARTED) {
 
-            // step 1: compute incremental distance
+            // If last coords null -> initialize from the event (first reading)
+            if (trip.getLastLatitude() == null || trip.getLastLongitude() == null) {
+                trip.setLastLatitude(event.getLatitude());
+                trip.setLastLongitude(event.getLongitude());
+                tripRepository.save(trip);
+                return;
+            }
+
+            // compute delta
             double deltaKm = HaversineUtil.distance(
                     trip.getLastLatitude(), trip.getLastLongitude(),
                     event.getLatitude(), event.getLongitude()
             );
 
-            // step 2: add to running total
+            // smoothing & sanity checks:
+            // - ignore tiny jitter under 5 meters (0.005 km)
+            // - ignore huge jumps > 2 km (likely bad)
+            if (deltaKm < 0.005) {
+                log.debug("Ignored tiny movement {} km for trip {}", deltaKm, trip.getTripId());
+                return;
+            }
+            if (deltaKm > 2.0) {
+                log.warn("Ignored improbable jump {} km for trip {}", deltaKm, trip.getTripId());
+                return;
+            }
+
             trip.setDistanceKm(trip.getDistanceKm() + deltaKm);
 
-            // step 3: update last known coordinates
+            // update last coords
             trip.setLastLatitude(event.getLatitude());
             trip.setLastLongitude(event.getLongitude());
 
             tripRepository.save(trip);
         }
-
     }
+
 
     @Override
     public void cancelTripByRider(Long tripId) {
