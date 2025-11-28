@@ -36,7 +36,9 @@ spring:
           driverArrived:com.as.commonevents.events.DriverArrivedEvent,
           tripStarted:com.as.commonevents.events.TripStarted,
           tripCompleted:com.as.commonevents.events.TripCompleted,
-          driverStatusUpdated:com.as.commonevents.events.DriverStatusUpdatedEvent
+          driverStatusUpdated:com.as.commonevents.events.DriverStatusUpdatedEvent,
+          tripCancelledRider:com.as.commonevents.events.TripCancelledByRiderEvent,
+          tripCancelledDriver:com.as.commonevents.events.TripCancelledByDriverEvent
 
 server:
   port: 8083

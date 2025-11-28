@@ -443,6 +443,73 @@ public class TripServiceImpl implements TripService {
 
     }
 
+    @Override
+    public void cancelTripByRider(Long tripId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new TripNotFoundException(tripId));
+
+        if (!(trip.getTripStatus() == TripStatus.REQUESTED ||
+                trip.getTripStatus() == TripStatus.ASSIGNED ||
+                trip.getTripStatus() == TripStatus.ACCEPTED)) {
+            throw new IllegalStateException("Rider cannot cancel trip in status " + trip.getTripStatus());
+        }
+
+        trip.setTripStatus(TripStatus.CANCELLED);
+        tripRepository.save(trip);
+
+        kafkaProducer.sendDriverStatusUpdatedEvent(
+                DriverStatusUpdatedEvent.builder()
+                        .driverId(trip.getDriverId())
+                        .status("AVAILABLE")
+                        .build()
+        );
+
+        kafkaProducer.sendTripCancelledByRiderEvent(
+                TripCancelledByRiderEvent.builder()
+                        .tripId(trip.getTripId())
+                        .riderId(trip.getRiderId())
+                        .driverId(trip.getDriverId())
+                        .cancelledAt(Instant.now())
+                        .build()
+        );
+
+    }
+
+    @Override
+    public void cancelTripByDriver(Long tripId, Long driverId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new TripNotFoundException(tripId));
+
+        if (!trip.getDriverId().equals(driverId)) {
+            throw new IllegalStateException("This driver is not assigned to the trip");
+        }
+
+        if (trip.getTripStatus() == TripStatus.STARTED ||
+                trip.getTripStatus() == TripStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot cancel after trip has begun");
+        }
+
+        trip.setTripStatus(TripStatus.CANCELLED);
+        tripRepository.save(trip);
+
+        // Driver becomes available
+        kafkaProducer.sendDriverStatusUpdatedEvent(
+                DriverStatusUpdatedEvent.builder()
+                        .driverId(driverId)
+                        .status("AVAILABLE")
+                        .build()
+        );
+
+        kafkaProducer.sendTripCancelledByDriverEvent(
+                TripCancelledByDriverEvent.builder()
+                        .tripId(tripId)
+                        .driverId(driverId)
+                        .riderId(trip.getRiderId())
+                        .cancelledAt(Instant.now())
+                        .build()
+        );
+    }
+
 
 //    @Override
 //    @Transactional

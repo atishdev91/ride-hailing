@@ -53,6 +53,7 @@ public class LocationKafkaListener {
 
 
 
+
 //
 //    @KafkaListener(topics = "rider-registered", groupId = "location-service-group")
 //    public void handleRiderRegisteredEvent(RiderRegisteredEvent event) {

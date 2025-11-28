@@ -22,4 +22,8 @@ public interface TripService {
     void checkDriverArrival(Long tripId);
 
     void handleDriverLocationUpdate(DriverLocationUpdatedEvent event);
+
+    void cancelTripByRider(Long tripId);
+
+    void cancelTripByDriver(Long tripId, Long driverId);
 }

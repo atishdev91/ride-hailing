@@ -33,7 +33,9 @@ public class KafkaProducerConfig {
                         "tripCompleted:com.as.commonevents.events.TripCompleted," +
                         "driverLocationUpdated:com.as.commonevents.events.DriverLocationUpdatedEvent," +
                         "driverEtaUpdated:com.as.commonevents.events.DriverEtaUpdatedEvent," +
-                        "driverStatusUpdated:com.as.commonevents.events.DriverStatusUpdatedEvent"
+                        "driverStatusUpdated:com.as.commonevents.events.DriverStatusUpdatedEvent," +
+                        "tripCancelledRider:com.as.commonevents.events.TripCancelledByRiderEvent," +
+                        "tripCancelledDriver:com.as.commonevents.events.TripCancelledByDriverEvent"
         );
 
         return new DefaultKafkaProducerFactory<>(config);

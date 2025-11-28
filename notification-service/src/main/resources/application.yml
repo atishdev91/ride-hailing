@@ -20,6 +20,7 @@ spring:
           tripCompleted:com.as.commonevents.events.TripCompleted,
           driverLocationUpdated:com.as.commonevents.events.DriverLocationUpdatedEvent,
           driverEtaUpdated:com.as.commonevents.events.DriverEtaUpdatedEvent
+       
 
 
 server:

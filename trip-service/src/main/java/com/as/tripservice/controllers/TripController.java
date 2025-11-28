@@ -62,5 +62,16 @@ public class TripController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{tripId}/cancel/rider")
+    public void riderCancel(@PathVariable Long tripId) {
+        tripService.cancelTripByRider(tripId);
+    }
+
+    @PostMapping("/{tripId}/cancel/driver/{driverId}")
+    public void driverCancel(@PathVariable Long tripId, @PathVariable Long driverId) {
+        tripService.cancelTripByDriver(tripId, driverId);
+    }
+
+
 
 }
